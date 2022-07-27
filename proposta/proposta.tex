@@ -1,0 +1,219 @@
+%        File: planoic.tex
+%     Created: Fri Apr 18 01:00 PM 2014 B
+% Last Change: Fri Apr 18 01:00 PM 2014 B
+%
+\documentclass[12pt, a4paper, oneside]{article}
+
+\usepackage{amsfonts}
+\usepackage[]{amsmath}
+\usepackage{amssymb}
+\usepackage[brazil]{babel}
+\usepackage[pt-BR]{datetime2}
+\usepackage[left=20mm,right=20mm,top=25mm,bottom=25mm]{geometry}
+\usepackage[]{graphicx}
+\usepackage[utf8]{inputenc}
+\usepackage{multirow}
+\usepackage{paralist}
+\usepackage{setspace}
+\usepackage[compact]{titlesec}
+\usepackage[]{url}
+\usepackage{xspace}
+\usepackage{mathpazo}
+\usepackage{txfonts}
+
+\titleformat{\section}
+  {\Large\bfseries}{\thesection.}{.5em}{}[\hrule\bigskip]
+\titleformat{\subsection}
+  {\bfseries}{\thesection.}{.5em}{}
+%\renewcommand{\baselinestretch}{1.5} 
+%\renewcommand{\rmdefault}{phv} % Arial
+%\renewcommand{\sfdefault}{phv} % Arial
+\setlength{\parskip}{6pt}
+
+\newcommand{\A}{\ensuremath{\mathtt{A}}\xspace}
+\newcommand{\C}{\ensuremath{\mathtt{C}}\xspace}
+\newcommand{\G}{\ensuremath{\mathtt{G}}\xspace}
+\newcommand{\T}{\ensuremath{\mathtt{T}}\xspace}
+
+\newcommand{\str}[1]{\ensuremath{\mathtt{#1}}\xspace}
+\newcommand{\strset}[1]{\ensuremath{\mathcal{#1}}\xspace}
+\newcommand{\ssS}{\strset{S}}
+\newcommand{\seq}[1]{\ensuremath{\mathtt{#1}}\xspace}
+
+\newcommand{\rank}{\ensuremath{\mathrm{rank}}\xspace}
+\newcommand{\select}{\ensuremath{\mathrm{select}}\xspace}
+\newcommand{\BWT}{\ensuremath{\mathrm{BWT}}\xspace}
+
+\newcommand{\X}{\ensuremath{\medbullet}\xspace}
+\newcommand{\x}{\ensuremath{\medcirc}\xspace}
+
+
+
+
+\newcommand{\thetitle}{Título provisório}
+\newcommand{\workarea}{Teoria da Computação~/~Algoritmos}
+\newcommand{\major}{Ciência da Computação}
+\newcommand{\studenttitle}{Aluno}
+\newcommand{\student}{Nome do(a) Aluno(a)}
+\newcommand{\studentemail}{student@cin.ufpe.br}
+\newcommand{\advisertitle}{Orientador}
+\newcommand{\adviser}{Paulo Fonseca}
+\newcommand{\adviseremail}{paguso@cin.ufpe.br}
+
+
+%\bibliography{projeto}
+
+
+\begin{document}
+%\onehalfspacing
+
+%\maketitle
+
+\thispagestyle{empty}
+\begin{center}
+\Large
+Universidade Federal de Pernambuco\\
+Centro de Informática\\
+Graduação em \major
+
+\vfill
+
+{\huge \bfseries \thetitle}
+\\
+\medskip
+{\bfseries\itshape Proposta de Trabalho de Graduação}
+
+\vfill
+
+\bigskip
+
+	\begin{tabular}{r p{95mm}}
+	\textbf{\studenttitle: } & \student \newline(\texttt{\studentemail}) \\ 
+\textbf{\advisertitle: } & \adviser \newline(\texttt{\adviseremail})
+\\
+	\textbf{Área: } & \workarea 
+\end{tabular}
+
+	\vspace{3cm}
+\DTMlangsetup{showdayofmonth=false}
+Recife, \today 
+\DTMlangsetup{showdayofmonth=true}
+\end{center}
+
+\clearpage 
+\thispagestyle{empty}
+\section*{Resumo}
+Um problema algorítmico recorrente em áreas diversas como Engenharia de Software ou Biologia Computacional, é o de encontrar o ancestral comum mais profundo (\textit{Lowest Common Ancestor}---LCA) em árvores e/ou grafos dirigidos. As principais soluções existentes consistem em pré-processar a árvore para facilitar a consulta, e portanto, são avaliadas em termos do tempo e espaço de pré-processamento e de consulta. O objetivo de desse trabalho é propor uma solução simples para consultas de LCAs (queries) sucessivas e avaliar o seu desempenho em termos teóricos e práticos com respeito ao tempo de pré-processamento, consulta e uso de memória, em comparação a algumas soluções consagradas encontradas na literatura.
+
+\clearpage
+\setcounter{page}{1}
+\section*{Introdução}
+
+Em ciência da computação, as árvores são estruturas ubíquas, utilizadas nas mais variadas aplicações, devido à sua versatilidade. As árvores formam a base de implementação de diversas estruturas de dados de várias linguagens de programação. Na área de Engenharia de Software, por exemplo, são usadas para modelar a herança em linguagens orientadas a objetos. Na área de Biologia Computacional, são usadas para representar árvores evolutivas. Nessas e em outras aplicações, um problema recorrente é o de determinar o ancestral comum mais profundo entre dois nós, em Inglês \textit{Lowest common ancestor}---LCA. 
+
+Quando a árvore de entrada é estática, uma solução frequentemente utilizada consistem em pré-processá-la para construir estruturas auxiliares que permitem consultas posteriores sem a necessidade de percorrer novamente a árvore. Bender e coautores \cite{Bender2005} apresentam algoritmos para o problema LCA baseados nessa abordagem, analisando-as em termos de tempo de pré-processamento e consulta. A solução ótima apresentada possui complexidade $\langle \Theta(n), \Theta(1)\rangle$, isto é, em tempo/espaço linear de pré-processamento e tempo constante de consulta.
+
+
+\section*{Objetivos}
+
+%Os algoritmos escritos para responder uma sequência de queries de LCAs consistem em duas fases, que são o algoritmo de pré-processamento da árvore, com a finalidade de gerar uma estrutura de dados que facilite a resposta do LCA, e a query propriamente dita, que é um algoritmo escrito sobre essa nova estrutura de dados, cujo fim é responder objetivamente o LCA da query.
+
+Este trabalho tem por objetivo geral analisar o desempenho prático relativo de diferentes algoritmos para o problema LCA. Especificamente, além de algoritmos descritos na literatura, nós pretendemos propor otimizações práticas para estruturas de dados resultantes do  pré-processamento da árvore com o objetivo de obter uma solução eficiente em termos de espaço e tempo, permitindo ainda que as consultas sejam respondidas em tempo ótimo ou sub-ótimo na maioria dos casos, conforme verificado em estudos preliminares já realizados.
+
+
+\section*{Metodologia}
+
+O projeto será organizado nas atividades descritas abaixo e desenvolvidas conforme o cronograma a seguir.
+
+\subsection*{T0. Preparação da proposta}
+
+Nesta fase inicial, aluno e orientador farão uma série de reuniões para definição do problema e escopo do projeto. O orientador apresentará a bibliografia básica sobre o tema e os possíveis pontos a serem abordados, e ambos decidirão sobre aqueles a serem desenvolvidos com base no  interesse mútuo.
+
+\subsection*{T1. Revisão e acompanhamento bibliográfico}
+
+Essa tarefa será executada de maneira mais acentuada no início do projeto. A atividade consiste num estudo dirigido centrado no  material bibliográfico mais diretamente relacionado às estruturas de dados e algoritmos a serem implementados no projeto. Ao final dessa fase inicial, espera-se que o aluno possa manter-se atualizado e aprofundar-se em pontos específicos de maneira mais autônoma.
+
+
+\subsection*{T2. Implementação das estruturas}
+
+Esta tarefa corresponde ao principal componente de desenvolvimento do projeto. O aluno deverá, em interação com o orientador, estudar detalhadamente algoritmos e estruturas de dados relativos a árvores, LCA, sparse tables, entre outros, e desenvolver uma implementação de referência em nível de produção para os mesmos, em C++.
+
+
+\subsection*{T3. Realização dos Testes}
+
+Nesta tarefa, o aluno deverá fazer uma análise experimental comparativa do desempenho do método proposto e implementado relativamente a outras alternativas identificadas num levantamento inicial na tarefa T1. Pode ser necessário obter dados reais e produzir dados sintéticos que simulem uma situação limite de estresse para os métodos.
+
+
+\subsection*{T4. Redação e revisão da monografia}
+
+A monografia produzida deverá conter:
+(1)~uma breve revisão bibliográfica do estado da arte, fruto da tarefa T1, (2)~descrição detalhada dos seus desenvolvimentos, incluindo a análise teórica dos algoritmos e estruturas propostas em termos de tempo e espaço, (3)~uma análise crítica com base em resultados experimentais da tarefa T3, e (4)~uma discussão com conclusões gerais sobre o projeto.
+
+
+\subsection*{T5. Preparação da Apresentação}
+
+Finalmente, o aluno preparará a apresentação da defesa do TG com o resumo dos desenvolvimentos e resultados obtidos.
+
+\medskip
+
+O acompanhamento será feito pessoalmente através de reuniões semanais. Todo material desenvolvido é compartilhado entre orientador e aluno através de um repositório privado na plataforma GitHub. 
+
+
+%\clearpage
+\section*{Cronograma de atividades}
+
+
+\begin{center}
+	\begin{tabular}{| l || c | c | c | c | c | c | c | c | c | c | c | c | c | c | c |  c | c | c | c | }
+		\hline
+		& \multicolumn{2}{| c |}{Mar} & \multicolumn{4}{| c |}{Abr} & \multicolumn{4}{| c |}{Mai} & \multicolumn{4}{| c |}{Jun} & \multicolumn{2}{| c |}{Jul} \\\hline\hline
+		Preparação da proposta & \X & \X & & & & & & & & & & & & & & \\\hline 
+		Revisão bibliográfica$^\dagger$ & \X & \X & \x & \x & \x & \x & \x & \x & & & & & & & & \\\hline 
+		Implementação das estruturas & & & \X & \X & \X & \X & \X & \X & \X & \X & \X & & & & & \\\hline 
+		Realização dos testes$^\ddagger$ & & & & \x & \x & \x & \x & \x & \x  & \X & \X & \X & & & & \\\hline 
+		Redação e revisão da monografia & & & & & & & & & & & \X & \X & \X & \X & & \\\hline 
+		Preparação da apresentação & & & & & & & & & & & & & & & \X & \X \\\hline 
+\hline
+	\end{tabular}
+\begin{minipage}{0.6\linewidth}
+\noindent($\dagger$) \X = levantamento inicial, \x= aprofundamento\newline
+\noindent($\ddagger$) \X= experimentos formais , \x = testes \textit{ad hoc} unitários\newline
+\end{minipage}
+
+\end{center}
+
+
+\clearpage
+\nocite{*}
+\bibliographystyle{unsrt-etal}
+\bibliography{proposta}
+%\printbibliography
+
+\clearpage
+\section*{Possíveis Avaliadores}
+
+\begin{enumerate}
+\item Prof. Gustavo Carvalho
+\item Prof. Silvio Melo
+\end{enumerate}
+
+
+%\clearpage
+\section*{Assinaturas}
+
+\vfill
+\begin{center}
+	Recife, \today 
+
+	\vspace{3cm}
+	\rule{10cm}{.5pt}\\
+	\textbf{\studenttitle:} \student\\
+
+	\vspace{3cm}
+	\rule{10cm}{.5pt}\\
+	\textbf{\advisertitle:} \adviser\\
+\end{center}
+\vfill
+
+\end{document}
+
