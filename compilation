@@ -1,0 +1,3 @@
+g++ -std=c++11 -O3 -DNDEBUG -I ~/include -L ~/lib program.cpp -o program -lsdsl -ldivsufsort -ldivsufsort64
+
+gcc -std=c11 -O3 -DNDEBUG -I ~/include -L ~/lib teste-rank-select.c -o teste-rank-select -lsdsl -ldivsufsort -ldivsufsort64 -lm
