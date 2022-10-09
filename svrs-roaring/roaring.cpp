@@ -1201,6 +1201,9 @@ size_t bitset_extract_setbits_avx2(const uint64_t *words, size_t length,
                                    uint32_t *out, size_t outcapacity,
                                    uint32_t base);
 
+
+int num;
+int *output = &num;
 /*
  * Given a bitset containing "length" 64-bit words, write out the position
  * of all the set bits to "out", values start at "base".
@@ -2130,9 +2133,13 @@ enum {
 STRUCT_CONTAINER(bitset_container_s) {
     int32_t cardinality;
     uint64_t *words;
-    bit_vector b;
-    rank_support_v5<> rb;
+    int num;
 };
+int num_bitsets = 0;
+
+bit_vector bv(pow(2,24), 0);
+rank_support_v5<> rs(&bv);
+
 
 typedef struct bitset_container_s bitset_container_t;
 
@@ -2158,13 +2165,11 @@ bitset_container_t *bitset_container_clone(const bitset_container_t *src);
 /* Set the bit in [begin,end). WARNING: as of April 2016, this method is slow
  * and
  * should not be used in performance-sensitive code. Ever.  */
-void bitset_container_set_range(bitset_container_t *bitset, uint32_t begin,
-                                uint32_t end);
+void bitset_container_set_range(bitset_container_t *bitset, uint32_t begin, uint32_t end);
 
 #if defined(CROARING_ASMBITMANIPOPTIMIZATION) && defined(__AVX2__)
 /* Set the ith bit.  */
-static inline void bitset_container_set(bitset_container_t *bitset,
-                                        uint16_t pos) {
+static inline void bitset_container_set(bitset_container_t *bitset, uint16_t pos) {
     /*uint64_t shift = 6;
     uint64_t offset;
     uint64_t p = pos;
@@ -2172,8 +2177,13 @@ static inline void bitset_container_set(bitset_container_t *bitset,
     uint64_t load = bitset->words[offset];
     ASM_SET_BIT_INC_WAS_CLEAR(load, p, bitset->cardinality);
     bitset->words[offset] = load;*/
-    bitset->b[pos] = 1;
-    bitset->cardinality += 1;
+    const int32_t oldcard = bitset->cardinality;
+    if(bv[(bitset->num)*65536 + pos]!=1){
+        bv[(bitset->num)*65536 + pos] = 1;
+        bitset->cardinality += 1;
+    }
+    //ASM_SET_BIT_INC_WAS_CLEAR(load, p, bitset->cardinality);
+    //bitset->words[offset] = load;
 }
 
 /* Unset the ith bit.  */
@@ -2199,12 +2209,12 @@ static inline bool bitset_container_add(bitset_container_t *bitset,
     //uint64_t load = bitset->words[offset];
     // could be possibly slightly further optimized
     const int32_t oldcard = bitset->cardinality;
-    if(bitset->b[pos]!=1){
-        bitset->b[pos] = 1;
+    if(bv[(bitset->num)*65536 + pos]!=1){
+        bv[(bitset->num)*65536 + pos] = 1;
         bitset->cardinality += 1;
     //ASM_SET_BIT_INC_WAS_CLEAR(load, p, bitset->cardinality);
     //bitset->words[offset] = load;
-    return bitset->cardinality > oldcard;
+    return (bitset->cardinality > oldcard);
 }
 
 /* Remove `pos' from `bitset'. Returns true if `pos' was present.  Might be
@@ -2237,11 +2247,18 @@ inline bool bitset_container_get(const bitset_container_t *bitset,
 /* Set the ith bit.  */
 static inline void bitset_container_set(bitset_container_t *bitset,
                                         uint16_t pos) {
-    const uint64_t old_word = bitset->words[pos >> 6];
+    /*const uint64_t old_word = bitset->words[pos >> 6];
     const int index = pos & 63;
     const uint64_t new_word = old_word | (UINT64_C(1) << index);
     bitset->cardinality += (uint32_t)((old_word ^ new_word) >> index);
-    bitset->words[pos >> 6] = new_word;
+    bitset->words[pos >> 6] = new_word;*/
+    const int32_t oldcard = bitset->cardinality;
+    if(bv[(bitset->num)*65536 + pos]!=1){
+        bv[(bitset->num)*65536 + pos] = 1;
+        bitset->cardinality += 1;
+    }
+    //ASM_SET_BIT_INC_WAS_CLEAR(load, p, bitset->cardinality);
+    //bitset->words[offset] = load;
 }
 
 /* Unset the ith bit.  */
@@ -2264,8 +2281,8 @@ static inline bool bitset_container_add(bitset_container_t *bitset,
     //const uint64_t increment = (old_word ^ new_word) >> index;
     //bitset->cardinality += (uint32_t)increment;
     bool increment;
-    if(bitset->b[pos]!=1){
-        bitset->b[pos] = 1;
+    if(bv[(bitset->num)*65536 + pos]!=1){
+        bv[(bitset->num)*65536 + pos] = 1;
         bitset->cardinality += 1;
         increment = true;
     }
@@ -6458,6 +6475,10 @@ static inline uint16_t container_minimum(
     assert(false);
     __builtin_unreachable();
     return false;
+}
+
+int print_output(){
+    return *output;
 }
 
 // number of values smaller or equal to x
@@ -13948,6 +13969,38 @@ uint64_t roaring_bitmap_rank(const roaring_bitmap_t *bm, uint32_t x) {
     return size;
 }
 
+void bitset_container_rank_start(bitset_container_t *bm, rank_support_v5<> *s) {
+    rank_support_v5<> t(&bv);
+    *s = t;
+}
+
+static inline container_t *container_rank_start(
+    container_t *c,
+    uint8_t typecode  // !!! should be second argument?
+){
+    c = get_writable_copy_if_shared(c, &typecode);
+    switch (typecode) {
+        case BITSET_CONTAINER_TYPE:
+            bitset_container_rank_start(CAST_bitset(c), &rs);
+            return c;
+        case ARRAY_CONTAINER_TYPE: {
+            return NULL;
+        } break;
+        case RUN_CONTAINER_TYPE:
+            return NULL;
+    }
+}
+
+void roaring_bitmap_rank_start(const roaring_bitmap_t *bm) {
+    for (int i = 0; i < bm->high_low_container.size; i++) {
+        //uint32_t key = bm->high_low_container.keys[i];
+        if(bm->high_low_container.typecodes[i]==BITSET_CONTAINER_TYPE){
+            container_rank_start(bm->high_low_container.containers[i],bm->high_low_container.typecodes[i]);
+        }
+    }
+}
+
+
 /**
 * roaring_bitmap_smallest returns the smallest value in the set.
 * Returns UINT32_MAX if the set is empty.
@@ -16507,10 +16560,11 @@ bitset_container_t *bitset_container_create(void) {
     if (!bitset) {
         return NULL;
     }
+    num_bitsets+= 1;
+    bitset->num = num_bitsets;
     // sizeof(__m256i) == 32
     //bitset->words = (uint64_t *)roaring_aligned_malloc(32, sizeof(uint64_t) * BITSET_CONTAINER_SIZE_IN_WORDS);
-    bit_vector b(BITSET_CONTAINER_SIZE_IN_WORDS*sizeof(uint64_t), 0);
-    bitset->b = b;
+    
     /*if (!bitset->words) {
         roaring_free(bitset);
         return NULL;
@@ -17380,7 +17434,7 @@ uint16_t bitset_container_maximum(const bitset_container_t *container) {
 /* Returns the number of values equal or smaller than x */
 int bitset_container_rank(const bitset_container_t *container, uint16_t x) {
   // credit: aqrit
-  rank_support_v5<> rb(&(container->b));
+  //rank_support_v5<> rb(&(container->b));
   /*int sum = 0;
   int i = 0;
   for (int end = x / 64; i < end; i++){
@@ -17391,8 +17445,10 @@ int bitset_container_rank(const bitset_container_t *container, uint16_t x) {
   uint64_t mask = lastpos + lastpos - 1; // smear right
   sum += hamming(lastword & mask);
   return sum;*/
-  //return rb.rank(x);
-  return 0;
+  if(((container->num)-1)<0) return (rs.rank(65536*(container->num)+x));
+  else return (rs.rank(65536*((container->num)-1)+x) - rs.rank(65536*((container->num)-1))); //pega o rank da posicao atual - rank do inicio do bloco
+  //else return (rs.rank(65536*(container->num)+x));//*output = rs.rank(65536*(container->num)-1+x);
+  //return ;
 }
 
 /* Returns the index of the first value equal or larger than x, or -1 */

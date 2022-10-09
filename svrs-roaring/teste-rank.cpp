@@ -161,12 +161,15 @@ int main() {
     clock_t start, end;
 
     start = clock();
+    roaring_bitmap_rank_start(r1);
+    
     for(uint32_t i = 0; i < m; i++){
-        //rank = roaring_bitmap_rank(r1, ((i*1.0/m)*bsize));
-        rank = roaring_bitmap_rank(r1, 100);
+        rank = roaring_bitmap_rank(r1, ((i*1.0/m)*bsize));
+        //rank = roaring_bitmap_rank(r1, 20000);
         //rank = roaring_bitmap_rank(r1, 10000000); 
-        printf("rank: %d\n", rank);
+        printf("rank: %f\n", rank);
     }
+    printf("%d", print_output());
     end = clock();
     rank_time = (double)(end-start)/CLOCKS_PER_SEC;
     printf("Rank time: %f\n", rank_time);
